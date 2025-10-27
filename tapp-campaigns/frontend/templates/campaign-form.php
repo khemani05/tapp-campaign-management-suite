@@ -8,8 +8,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$campaign_type = isset($_GET['action']) && $_GET['action'] === 'create-sales' ? 'sales' : 'team';
-$editing = isset($_GET['id']);
+$campaign_type = isset(get_query_var('campaign_action')) && get_query_var('campaign_action') === 'create-sales' ? 'sales' : 'team';
+$editing = get_query_var('campaign_id');
 $campaign = $editing ? TAPP_Campaigns_Campaign::get(intval($_GET['id'])) : null;
 
 // Handle form submission
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_campaign'])) {
         }
 
         // Redirect to dashboard
-        wp_redirect(wc_get_account_endpoint_url('campaigns'));
+        wp_redirect(home_url('/campaign-manager/'));
         exit;
     }
 }
@@ -160,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_campaign'])) {
             <button type="submit" class="button button-primary button-large">
                 <?php echo $editing ? __('Update Campaign', 'tapp-campaigns') : __('Create Campaign', 'tapp-campaigns'); ?>
             </button>
-            <a href="<?php echo esc_url(wc_get_account_endpoint_url('campaigns')); ?>" class="button button-secondary">
+            <a href="<?php echo esc_url(home_url('/campaign-manager/')); ?>" class="button button-secondary">
                 <?php _e('Cancel', 'tapp-campaigns'); ?>
             </a>
         </p>

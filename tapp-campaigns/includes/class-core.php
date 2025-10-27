@@ -95,6 +95,7 @@ class TAPP_Campaigns_Core {
 
     public function add_query_vars($vars) {
         $vars[] = 'campaign';
+        $vars[] = 'campaign_page';
         $vars[] = 'campaign_action';
         $vars[] = 'campaign_id';
         return $vars;
@@ -108,22 +109,37 @@ class TAPP_Campaigns_Core {
             'top'
         );
 
-        // Dashboard actions: /my-account/campaigns/create/
+        // Campaign Manager Dashboard: /campaign-manager/
         add_rewrite_rule(
-            '^my-account/campaigns/([^/]+)/?$',
-            'index.php?pagename=my-account&campaign_action=$matches[1]',
+            '^campaign-manager/?$',
+            'index.php?campaign_page=manager',
+            'top'
+        );
+
+        // Campaign Manager Actions: /campaign-manager/create-team/
+        add_rewrite_rule(
+            '^campaign-manager/([^/]+)/?$',
+            'index.php?campaign_page=manager&campaign_action=$matches[1]',
+            'top'
+        );
+
+        // Campaign Manager with ID: /campaign-manager/edit/123/
+        add_rewrite_rule(
+            '^campaign-manager/([^/]+)/([0-9]+)/?$',
+            'index.php?campaign_page=manager&campaign_action=$matches[1]&campaign_id=$matches[2]',
+            'top'
+        );
+
+        // My Campaigns: /my-campaigns/
+        add_rewrite_rule(
+            '^my-campaigns/?$',
+            'index.php?campaign_page=my-campaigns',
             'top'
         );
     }
 
     public function add_account_endpoints() {
-        if (!function_exists('wc_get_page_id')) {
-            return;
-        }
-
-        // Add endpoints to WooCommerce My Account
-        add_rewrite_endpoint('campaigns', EP_ROOT | EP_PAGES);
-        add_rewrite_endpoint('my-campaigns', EP_ROOT | EP_PAGES);
+        // No longer using WooCommerce endpoints - using standalone pages
     }
 
     public function template_redirect() {
@@ -134,10 +150,11 @@ class TAPP_Campaigns_Core {
             exit;
         }
 
-        // Handle dashboard actions
-        $action = get_query_var('campaign_action');
-        if ($action && is_account_page()) {
-            $this->handle_dashboard_action($action);
+        // Handle standalone pages
+        $page = get_query_var('campaign_page');
+        if ($page) {
+            $this->load_standalone_page($page);
+            exit;
         }
     }
 
@@ -168,6 +185,33 @@ class TAPP_Campaigns_Core {
 
         // Load campaign page template
         include TAPP_CAMPAIGNS_PATH . 'frontend/templates/campaign-page.php';
+    }
+
+    private function load_standalone_page($page) {
+        if (!is_user_logged_in()) {
+            wp_redirect(wc_get_page_permalink('myaccount') . '?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+            exit;
+        }
+
+        $user_id = get_current_user_id();
+
+        if ($page === 'manager') {
+            // Check if user can manage campaigns
+            if (!tapp_campaigns_onboarding()->can_create_campaigns($user_id)) {
+                wp_die(__('You do not have permission to access this page.', 'tapp-campaigns'));
+            }
+
+            // Load manager dashboard
+            get_header();
+            include TAPP_CAMPAIGNS_PATH . 'frontend/templates/dashboard.php';
+            get_footer();
+
+        } elseif ($page === 'my-campaigns') {
+            // Load user's campaigns page
+            get_header();
+            include TAPP_CAMPAIGNS_PATH . 'frontend/templates/my-campaigns.php';
+            get_footer();
+        }
     }
 
     private function handle_dashboard_action($action) {

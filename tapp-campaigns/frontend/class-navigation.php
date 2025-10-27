@@ -47,7 +47,7 @@ class TAPP_Campaigns_Navigation {
         $user_id = get_current_user_id();
         $active_count = $this->get_active_campaigns_count($user_id);
 
-        $dashboard_url = wc_get_account_endpoint_url('campaigns');
+        $dashboard_url = home_url('/campaign-manager/');
 
         ob_start();
         ?>
@@ -60,8 +60,8 @@ class TAPP_Campaigns_Navigation {
             </a>
             <ul class="sub-menu">
                 <li><a href="<?php echo esc_url($dashboard_url); ?>"><?php _e('Dashboard', 'tapp-campaigns'); ?></a></li>
-                <li><a href="<?php echo esc_url(add_query_arg('action', 'create-team', $dashboard_url)); ?>"><?php _e('Create Team Campaign', 'tapp-campaigns'); ?></a></li>
-                <li><a href="<?php echo esc_url(add_query_arg('action', 'create-sales', $dashboard_url)); ?>"><?php _e('Create Sales Campaign', 'tapp-campaigns'); ?></a></li>
+                <li><a href="<?php echo esc_url(home_url('/campaign-manager/create-team/')); ?>"><?php _e('Create Team Campaign', 'tapp-campaigns'); ?></a></li>
+                <li><a href="<?php echo esc_url(home_url('/campaign-manager/create-sales/')); ?>"><?php _e('Create Sales Campaign', 'tapp-campaigns'); ?></a></li>
                 <li><a href="<?php echo esc_url(add_query_arg('filter', 'active', $dashboard_url)); ?>"><?php _e('Active Campaigns', 'tapp-campaigns'); ?></a></li>
                 <li><a href="<?php echo esc_url(add_query_arg('filter', 'scheduled', $dashboard_url)); ?>"><?php _e('Scheduled Campaigns', 'tapp-campaigns'); ?></a></li>
                 <li><a href="<?php echo esc_url(add_query_arg('filter', 'ended', $dashboard_url)); ?>"><?php _e('Ended Campaigns', 'tapp-campaigns'); ?></a></li>
@@ -92,7 +92,7 @@ class TAPP_Campaigns_Navigation {
         ob_start();
         ?>
         <li class="menu-item menu-item-has-children tapp-user-menu">
-            <a href="<?php echo esc_url(wc_get_account_endpoint_url('my-campaigns')); ?>">
+            <a href="<?php echo esc_url(home_url('/my-campaigns/')); ?>">
                 <?php _e('Campaigns', 'tapp-campaigns'); ?>
                 <?php if ($pending_count > 0): ?>
                     <span class="tapp-badge tapp-badge-pending"><?php echo $pending_count; ?></span>

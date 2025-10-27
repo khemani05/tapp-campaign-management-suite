@@ -35,10 +35,10 @@ $active_campaigns = TAPP_Campaigns_Database::count_campaigns(array_merge($args, 
         <h2><?php _e('Campaign Manager', 'tapp-campaigns'); ?></h2>
 
         <div class="dashboard-actions">
-            <a href="<?php echo esc_url(add_query_arg('action', 'create-team')); ?>" class="button button-primary">
+            <a href="<?php echo esc_url(home_url('/campaign-manager/create-team/')); ?>" class="button button-primary">
                 <?php _e('+ Create Team Campaign', 'tapp-campaigns'); ?>
             </a>
-            <a href="<?php echo esc_url(add_query_arg('action', 'create-sales')); ?>" class="button button-secondary">
+            <a href="<?php echo esc_url(home_url('/campaign-manager/create-sales/')); ?>" class="button button-secondary">
                 <?php _e('+ Create Sales Campaign', 'tapp-campaigns'); ?>
             </a>
         </div>
@@ -73,7 +73,7 @@ $active_campaigns = TAPP_Campaigns_Database::count_campaigns(array_merge($args, 
         </a>
     </div>
 
-    <?php if (isset($_GET['action']) && in_array($_GET['action'], ['create-team', 'create-sales'])): ?>
+    <?php if (get_query_var('campaign_action') && in_array($_GET['action'], ['create-team', 'create-sales'])): ?>
         <!-- Campaign Creation Form -->
         <?php include TAPP_CAMPAIGNS_PATH . 'frontend/templates/campaign-form.php'; ?>
 
