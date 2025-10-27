@@ -1,0 +1,52 @@
+/**
+ * TAPP Campaigns Admin Styles
+ */
+
+.tapp-dashboard .dashboard-header {
+    margin-bottom: 20px;
+}
+
+.product-search-results {
+    border: 1px solid #ddd;
+    max-height: 300px;
+    overflow-y: auto;
+    background: #fff;
+}
+
+.product-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.product-result img {
+    border-radius: 3px;
+}
+
+.product-result span {
+    flex: 1;
+}
+
+.selected-product {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    margin-bottom: 5px;
+    background: #f0f0f1;
+    border-radius: 3px;
+}
+
+.selected-product span {
+    flex: 1;
+}
+
+#product-selector {
+    margin-top: 10px;
+}
+
+#selected-products {
+    margin-top: 15px;
+}
