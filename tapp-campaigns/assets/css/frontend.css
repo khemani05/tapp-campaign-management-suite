@@ -361,6 +361,476 @@
     margin-top: 15px;
 }
 
+/* ========================================
+   MODERN TEMPLATE - Carousel Layout
+   ======================================== */
+
+.tapp-template-modern {
+    background: #fafafa;
+}
+
+.tapp-template-modern .modern-header {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, var(--tapp-primary-color, #0073aa) 0%, #005177 100%);
+    color: white;
+    margin-bottom: 40px;
+}
+
+.tapp-template-modern .modern-header h1 {
+    color: white;
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.tapp-template-modern .timer-modern {
+    font-size: 18px;
+    margin-top: 20px;
+}
+
+.tapp-template-modern .carousel-container {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 40px;
+}
+
+.tapp-template-modern .carousel-track {
+    display: flex;
+    transition: transform 0.5s ease;
+}
+
+.tapp-template-modern .carousel-item {
+    flex: 0 0 100%;
+    padding: 20px;
+}
+
+.tapp-template-modern .carousel-nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.tapp-template-modern .carousel-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ddd;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.tapp-template-modern .carousel-dot.active {
+    background: var(--tapp-primary-color, #0073aa);
+    width: 30px;
+    border-radius: 6px;
+}
+
+.tapp-template-modern .products-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 25px;
+    padding: 0 20px;
+}
+
+.tapp-template-modern .product-card-modern {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.tapp-template-modern .product-card-modern:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.tapp-template-modern .product-card-modern.selected {
+    border: 3px solid var(--tapp-primary-color, #0073aa);
+}
+
+.tapp-template-modern .card-image-modern {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.tapp-template-modern .card-image-modern img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tapp-template-modern .card-content-modern {
+    padding: 20px;
+}
+
+.tapp-template-modern .card-content-modern h3 {
+    font-size: 18px;
+    margin: 0 0 10px 0;
+}
+
+.tapp-template-modern .selection-counter-modern {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--tapp-primary-color, #0073aa);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 100;
+}
+
+.tapp-template-modern .button-modern {
+    background: var(--tapp-button-color, #0073aa);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 18px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+    margin-top: 30px;
+}
+
+.tapp-template-modern .button-modern:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* ========================================
+   MINIMAL TEMPLATE - List Layout
+   ======================================== */
+
+.tapp-template-minimal {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.tapp-template-minimal .container-minimal {
+    background: white;
+}
+
+.tapp-template-minimal .minimal-header {
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 20px;
+}
+
+.tapp-template-minimal .minimal-header h1 {
+    font-size: 24px;
+    margin: 0 0 10px 0;
+}
+
+.tapp-template-minimal .countdown-compact {
+    font-size: 14px;
+    color: #666;
+    margin-top: 10px;
+}
+
+.tapp-template-minimal .notes-minimal {
+    padding: 12px;
+    background: #fffbcc;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.tapp-template-minimal .selection-bar {
+    padding: 12px;
+    background: var(--tapp-primary-color, #0073aa);
+    color: white;
+    text-align: center;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.tapp-template-minimal .product-list-minimal {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.tapp-template-minimal .product-item-minimal {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    border: 2px solid #eee;
+    border-radius: 8px;
+    background: white;
+    transition: all 0.3s;
+}
+
+.tapp-template-minimal .product-item-minimal.selected {
+    border-color: var(--tapp-primary-color, #0073aa);
+    background: #f0f6fc;
+}
+
+.tapp-template-minimal .item-image {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.tapp-template-minimal .item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tapp-template-minimal .item-content {
+    flex: 1;
+}
+
+.tapp-template-minimal .item-content h3 {
+    font-size: 16px;
+    margin: 0 0 5px 0;
+}
+
+.tapp-template-minimal .sku {
+    font-size: 12px;
+    color: #666;
+    margin: 0 0 10px 0;
+}
+
+.tapp-template-minimal .options-compact {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.tapp-template-minimal .compact-select,
+.tapp-template-minimal .compact-input {
+    flex: 1;
+    min-width: 80px;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.tapp-template-minimal .checkbox-minimal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.tapp-template-minimal .checkbox-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tapp-primary-color, #0073aa);
+}
+
+.tapp-template-minimal .sticky-footer {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 15px;
+    border-top: 2px solid #eee;
+    margin-top: 20px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+.tapp-template-minimal .button-minimal {
+    width: 100%;
+    padding: 12px;
+    background: var(--tapp-button-color, #0073aa);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.tapp-template-minimal .button-minimal:hover {
+    opacity: 0.9;
+}
+
+.tapp-template-minimal .submitted-minimal {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.tapp-template-minimal .check-icon {
+    font-size: 48px;
+    color: #46b450;
+    margin-bottom: 15px;
+}
+
+/* ========================================
+   HERO TEMPLATE - Banner Layout
+   ======================================== */
+
+.tapp-template-hero .hero-banner {
+    position: relative;
+    min-height: 400px;
+    background-size: cover;
+    background-position: center;
+    background-color: #1a1a1a;
+    margin-bottom: 40px;
+}
+
+.tapp-template-hero .hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tapp-template-hero .hero-content {
+    text-align: center;
+    color: white;
+    padding: 20px;
+    max-width: 800px;
+}
+
+.tapp-template-hero .hero-title {
+    font-size: 48px;
+    margin: 0 0 20px 0;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.tapp-template-hero .hero-subtitle {
+    font-size: 20px;
+    margin: 0 0 30px 0;
+    opacity: 0.95;
+}
+
+.tapp-template-hero .hero-countdown {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.tapp-template-hero .campaign-intro {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 40px;
+    padding: 20px;
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+.tapp-template-hero .selection-header-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.tapp-template-hero .selection-counter-hero {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.tapp-template-hero .selection-counter-hero .count {
+    color: var(--tapp-primary-color, #0073aa);
+    font-size: 28px;
+}
+
+.tapp-template-hero .products-grid-hero {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.tapp-template-hero .product-card-hero {
+    background: white;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.tapp-template-hero .product-card-hero:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+
+.tapp-template-hero .product-card-hero.selected {
+    border-color: var(--tapp-primary-color, #0073aa);
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+}
+
+.tapp-template-hero .card-image {
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.tapp-template-hero .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tapp-template-hero .card-body {
+    padding: 20px;
+}
+
+.tapp-template-hero .card-body h3 {
+    font-size: 18px;
+    margin: 0 0 8px 0;
+}
+
+.tapp-template-hero .form-footer-hero {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.tapp-template-hero .button-hero {
+    background: var(--tapp-button-color, #0073aa);
+    color: white;
+    border: none;
+    padding: 18px 50px;
+    font-size: 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.tapp-template-hero .button-hero:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.tapp-template-hero .hero-submitted {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.tapp-template-hero .hero-submitted h2 {
+    color: #46b450;
+    font-size: 32px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .tapp-products-grid {
@@ -379,5 +849,30 @@
 
     .dashboard-actions .button {
         flex: 1;
+    }
+
+    .tapp-template-modern .modern-header h1 {
+        font-size: 28px;
+    }
+
+    .tapp-template-modern .products-grid-modern {
+        grid-template-columns: 1fr;
+    }
+
+    .tapp-template-hero .hero-title {
+        font-size: 32px;
+    }
+
+    .tapp-template-hero .hero-subtitle {
+        font-size: 16px;
+    }
+
+    .tapp-template-hero .products-grid-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .tapp-template-hero .selection-header-hero {
+        flex-direction: column;
+        gap: 15px;
     }
 }

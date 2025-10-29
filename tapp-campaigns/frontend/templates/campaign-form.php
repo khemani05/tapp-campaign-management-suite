@@ -25,6 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_campaign'])) {
         'description' => wp_kses_post($_POST['description']),
         'selection_limit' => intval($_POST['selection_limit']),
         'department' => sanitize_text_field($_POST['department']),
+        'template_layout' => sanitize_text_field($_POST['template_layout'] ?? 'classic'),
+        'template_primary_color' => sanitize_hex_color($_POST['template_primary_color'] ?? '#0073aa'),
+        'template_button_color' => sanitize_hex_color($_POST['template_button_color'] ?? '#0073aa'),
+        'template_hero_image' => esc_url_raw($_POST['template_hero_image'] ?? ''),
         'status' => 'draft',
     ];
 
@@ -130,6 +134,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_campaign'])) {
             </tr>
 
             <tr>
+                <th><label><?php _e('Page Template', 'tapp-campaigns'); ?></label></th>
+                <td>
+                    <?php
+                    $selected_template = $editing ? ($campaign->template_layout ?? 'classic') : 'classic';
+                    $templates = TAPP_Campaigns_Templates::get_all();
+                    ?>
+                    <div class="template-selector">
+                        <?php foreach ($templates as $slug => $template): ?>
+                            <label class="template-option">
+                                <input type="radio" name="template_layout" value="<?php echo esc_attr($slug); ?>"
+                                    <?php checked($selected_template, $slug); ?>>
+                                <div class="template-preview">
+                                    <strong><?php echo esc_html($template['name']); ?></strong>
+                                    <p><?php echo esc_html($template['description']); ?></p>
+                                </div>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                    <p class="description"><?php _e('Choose a layout template for your campaign page', 'tapp-campaigns'); ?></p>
+                </td>
+            </tr>
+
+            <tr class="template-color-settings">
+                <th><label><?php _e('Template Colors', 'tapp-campaigns'); ?></label></th>
+                <td>
+                    <div style="display: flex; gap: 20px; margin-bottom: 10px;">
+                        <div>
+                            <label for="template_primary_color"><?php _e('Primary Color', 'tapp-campaigns'); ?></label><br>
+                            <input type="color" name="template_primary_color" id="template_primary_color"
+                                value="<?php echo $editing ? esc_attr($campaign->template_primary_color ?? '#0073aa') : '#0073aa'; ?>">
+                        </div>
+                        <div>
+                            <label for="template_button_color"><?php _e('Button Color', 'tapp-campaigns'); ?></label><br>
+                            <input type="color" name="template_button_color" id="template_button_color"
+                                value="<?php echo $editing ? esc_attr($campaign->template_button_color ?? '#0073aa') : '#0073aa'; ?>">
+                        </div>
+                    </div>
+                    <p class="description"><?php _e('Customize the colors for your campaign page', 'tapp-campaigns'); ?></p>
+                </td>
+            </tr>
+
+            <tr class="template-hero-settings" style="<?php echo ($selected_template !== 'hero') ? 'display:none;' : ''; ?>">
+                <th><label for="template_hero_image"><?php _e('Hero Image URL', 'tapp-campaigns'); ?></label></th>
+                <td>
+                    <input type="url" name="template_hero_image" id="template_hero_image" class="large-text"
+                        value="<?php echo $editing ? esc_url($campaign->template_hero_image ?? '') : ''; ?>"
+                        placeholder="https://example.com/image.jpg">
+                    <p class="description"><?php _e('Enter the URL for the hero banner background image (for Hero template only)', 'tapp-campaigns'); ?></p>
+                </td>
+            </tr>
+
+            <tr>
                 <th><label><?php _e('Products', 'tapp-campaigns'); ?> *</label></th>
                 <td>
                     <div id="product-selector">
@@ -167,8 +223,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_campaign'])) {
     </form>
 </div>
 
+<style>
+.template-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.template-option {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: block;
+}
+
+.template-option:hover {
+    border-color: #999;
+}
+
+.template-option input[type="radio"] {
+    margin-right: 10px;
+}
+
+.template-option input[type="radio"]:checked ~ .template-preview {
+    font-weight: 600;
+}
+
+.template-option:has(input:checked) {
+    border-color: #0073aa;
+    background: #f0f6fc;
+}
+
+.template-preview strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.template-preview p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+}
+</style>
+
 <script>
 jQuery(document).ready(function($) {
+    // Template selection handler - show/hide hero image field
+    $('input[name="template_layout"]').on('change', function() {
+        var selectedTemplate = $(this).val();
+        if (selectedTemplate === 'hero') {
+            $('.template-hero-settings').show();
+        } else {
+            $('.template-hero-settings').hide();
+        }
+    });
+
     // Product search
     $('#product-search').on('keyup', function() {
         var search = $(this).val();
