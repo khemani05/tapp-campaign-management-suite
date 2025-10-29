@@ -18,6 +18,24 @@ $args = [
     'offset' => 0,
 ];
 
+// Handle search
+if (isset($_GET['s']) && !empty($_GET['s'])) {
+    $args['search'] = sanitize_text_field($_GET['s']);
+}
+
+// Handle type filter
+if (isset($_GET['type']) && in_array($_GET['type'], ['team', 'sales'])) {
+    $args['type'] = sanitize_text_field($_GET['type']);
+}
+
+// Handle date range
+if (isset($_GET['date_from']) && !empty($_GET['date_from'])) {
+    $args['date_from'] = sanitize_text_field($_GET['date_from']);
+}
+if (isset($_GET['date_to']) && !empty($_GET['date_to'])) {
+    $args['date_to'] = sanitize_text_field($_GET['date_to']);
+}
+
 if (!$onboarding->can_view_all_campaigns($user_id)) {
     $args['creator_id'] = $user_id;
 }
@@ -135,6 +153,51 @@ $aggregate_stats = $wpdb->get_row("
         </a>
     </div>
 
+    <!-- Advanced Search & Filters -->
+    <div class="dashboard-search-bar">
+        <form method="get" action="" class="search-form">
+            <input type="hidden" name="campaign_page" value="manager">
+            <?php if (isset($_GET['filter'])): ?>
+                <input type="hidden" name="filter" value="<?php echo esc_attr($_GET['filter']); ?>">
+            <?php endif; ?>
+
+            <div class="search-fields">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
+                    <input type="text" name="s" class="search-input"
+                           placeholder="<?php _e('Search campaigns...', 'tapp-campaigns'); ?>"
+                           value="<?php echo isset($_GET['s']) ? esc_attr($_GET['s']) : ''; ?>">
+                </div>
+
+                <select name="type" class="filter-select">
+                    <option value=""><?php _e('All Types', 'tapp-campaigns'); ?></option>
+                    <option value="team" <?php selected(isset($_GET['type']) && $_GET['type'] === 'team'); ?>><?php _e('Team', 'tapp-campaigns'); ?></option>
+                    <option value="sales" <?php selected(isset($_GET['type']) && $_GET['type'] === 'sales'); ?>><?php _e('Sales', 'tapp-campaigns'); ?></option>
+                </select>
+
+                <input type="date" name="date_from" class="date-input"
+                       placeholder="<?php _e('From date', 'tapp-campaigns'); ?>"
+                       value="<?php echo isset($_GET['date_from']) ? esc_attr($_GET['date_from']) : ''; ?>">
+
+                <input type="date" name="date_to" class="date-input"
+                       placeholder="<?php _e('To date', 'tapp-campaigns'); ?>"
+                       value="<?php echo isset($_GET['date_to']) ? esc_attr($_GET['date_to']) : ''; ?>">
+
+                <button type="submit" class="button button-primary search-button">
+                    <?php _e('Search', 'tapp-campaigns'); ?>
+                </button>
+
+                <?php if (isset($_GET['s']) || isset($_GET['type']) || isset($_GET['date_from']) || isset($_GET['date_to'])): ?>
+                    <a href="<?php echo esc_url(remove_query_arg(['s', 'type', 'date_from', 'date_to'])); ?>" class="button clear-filters">
+                        <?php _e('Clear', 'tapp-campaigns'); ?>
+                    </a>
+                <?php endif; ?>
+            </div>
+        </form>
+    </div>
+
     <?php if (get_query_var('campaign_action') && in_array($_GET['action'], ['create-team', 'create-sales'])): ?>
         <!-- Campaign Creation Form -->
         <?php include TAPP_CAMPAIGNS_PATH . 'frontend/templates/campaign-form.php'; ?>
@@ -145,10 +208,39 @@ $aggregate_stats = $wpdb->get_row("
             <?php if (empty($campaigns)): ?>
                 <p class="no-campaigns"><?php _e('No campaigns found.', 'tapp-campaigns'); ?></p>
             <?php else: ?>
-                <table class="campaigns-table">
-                    <thead>
-                        <tr>
-                            <th><?php _e('Campaign Name', 'tapp-campaigns'); ?></th>
+                <form id="bulk-actions-form" method="post" action="">
+                    <?php wp_nonce_field('tapp_bulk_actions', 'bulk_nonce'); ?>
+
+                    <div class="bulk-actions-bar">
+                        <label class="select-all-wrapper">
+                            <input type="checkbox" id="select-all-campaigns" class="select-all-checkbox">
+                            <span><?php _e('Select All', 'tapp-campaigns'); ?></span>
+                        </label>
+
+                        <select name="bulk_action" id="bulk-action-select" class="bulk-action-select">
+                            <option value=""><?php _e('Bulk Actions', 'tapp-campaigns'); ?></option>
+                            <option value="activate"><?php _e('Activate', 'tapp-campaigns'); ?></option>
+                            <option value="end"><?php _e('End', 'tapp-campaigns'); ?></option>
+                            <option value="archive"><?php _e('Archive', 'tapp-campaigns'); ?></option>
+                            <option value="delete"><?php _e('Delete', 'tapp-campaigns'); ?></option>
+                        </select>
+
+                        <button type="submit" class="button bulk-action-button" disabled>
+                            <?php _e('Apply', 'tapp-campaigns'); ?>
+                        </button>
+
+                        <span class="selected-count" style="display:none;">
+                            <span class="count">0</span> <?php _e('selected', 'tapp-campaigns'); ?>
+                        </span>
+                    </div>
+
+                    <table class="campaigns-table">
+                        <thead>
+                            <tr>
+                                <th class="check-column">
+                                    <input type="checkbox" class="select-all-checkbox-header">
+                                </th>
+                                <th><?php _e('Campaign Name', 'tapp-campaigns'); ?></th>
                             <th><?php _e('Type', 'tapp-campaigns'); ?></th>
                             <th><?php _e('Status', 'tapp-campaigns'); ?></th>
                             <th><?php _e('Dates', 'tapp-campaigns'); ?></th>
@@ -160,6 +252,9 @@ $aggregate_stats = $wpdb->get_row("
                         <?php foreach ($campaigns as $campaign): ?>
                             <?php $stats = TAPP_Campaigns_Campaign::get_stats($campaign->id); ?>
                             <tr>
+                                <td class="check-column">
+                                    <input type="checkbox" name="campaign_ids[]" value="<?php echo esc_attr($campaign->id); ?>" class="campaign-checkbox">
+                                </td>
                                 <td>
                                     <strong><?php echo esc_html($campaign->name); ?></strong>
                                 </td>
@@ -217,7 +312,70 @@ $aggregate_stats = $wpdb->get_row("
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+                </form>
             <?php endif; ?>
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+jQuery(document).ready(function($) {
+    // Select all functionality
+    $('#select-all-campaigns, .select-all-checkbox-header').on('change', function() {
+        var isChecked = $(this).prop('checked');
+        $('.campaign-checkbox').prop('checked', isChecked);
+        $('#select-all-campaigns, .select-all-checkbox-header').prop('checked', isChecked);
+        updateBulkActionsBar();
+    });
+
+    // Individual checkbox
+    $('.campaign-checkbox').on('change', function() {
+        updateBulkActionsBar();
+    });
+
+    // Bulk action selector
+    $('#bulk-action-select').on('change', function() {
+        updateBulkActionsBar();
+    });
+
+    function updateBulkActionsBar() {
+        var checked = $('.campaign-checkbox:checked').length;
+        var bulkAction = $('#bulk-action-select').val();
+
+        if (checked > 0) {
+            $('.bulk-action-button').prop('disabled', !bulkAction);
+            $('.selected-count').show().find('.count').text(checked);
+        } else {
+            $('.bulk-action-button').prop('disabled', true);
+            $('.selected-count').hide();
+        }
+
+        // Update select all checkboxes
+        var total = $('.campaign-checkbox').length;
+        $('#select-all-campaigns, .select-all-checkbox-header').prop('checked', checked === total && total > 0);
+    }
+
+    // Handle bulk action form submission
+    $('#bulk-actions-form').on('submit', function(e) {
+        var action = $('#bulk-action-select').val();
+        var checked = $('.campaign-checkbox:checked').length;
+
+        if (!action || checked === 0) {
+            e.preventDefault();
+            return false;
+        }
+
+        if (action === 'delete') {
+            if (!confirm('<?php echo esc_js(__('Are you sure you want to delete the selected campaigns? This action cannot be undone.', 'tapp-campaigns')); ?>')) {
+                e.preventDefault();
+                return false;
+            }
+        } else if (action === 'end') {
+            if (!confirm('<?php echo esc_js(__('Are you sure you want to end the selected campaigns?', 'tapp-campaigns')); ?>')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+});
+</script>

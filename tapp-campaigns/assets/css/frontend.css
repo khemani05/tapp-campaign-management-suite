@@ -324,10 +324,92 @@
 }
 
 .dashboard-filters {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     padding: 15px;
     background: #f0f0f1;
     border-radius: 4px;
+}
+
+/* Dashboard Search Bar */
+.dashboard-search-bar {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #fff;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+}
+
+.search-form .search-fields {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.search-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    border-color: #0073aa;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+}
+
+.filter-select,
+.date-input {
+    padding: 10px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    transition: all 0.2s;
+    min-width: 150px;
+}
+
+.filter-select:focus,
+.date-input:focus {
+    border-color: #0073aa;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+}
+
+.search-button {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.clear-filters {
+    padding: 10px 20px;
+    font-size: 14px;
+    background: #f6f7f7;
+    color: #50575e;
+    border: 2px solid #ddd;
+}
+
+.clear-filters:hover {
+    background: #e5e5e5;
 }
 
 .filter-link {
@@ -990,4 +1072,67 @@
         flex-direction: column;
         gap: 15px;
     }
+}
+
+/* Bulk Actions Bar */
+.bulk-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.select-all-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.select-all-wrapper input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.bulk-action-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: #fff;
+}
+
+.bulk-action-button {
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.bulk-action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.selected-count {
+    color: #666;
+    font-size: 14px;
+}
+
+.selected-count .count {
+    font-weight: 600;
+    color: #0073aa;
+}
+
+.check-column {
+    width: 50px;
+    text-align: center !important;
+}
+
+.check-column input[type="checkbox"] {
+    cursor: pointer;
 }

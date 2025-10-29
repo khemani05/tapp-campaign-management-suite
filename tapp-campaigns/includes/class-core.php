@@ -204,6 +204,9 @@ class TAPP_Campaigns_Core {
             // Handle quick actions before loading dashboard
             $this->handle_quick_actions();
 
+            // Handle bulk actions
+            $this->handle_bulk_actions();
+
             // Load manager dashboard
             get_header();
             include TAPP_CAMPAIGNS_PATH . 'frontend/templates/dashboard.php';
@@ -251,6 +254,75 @@ class TAPP_Campaigns_Core {
                 wp_die(__('Failed to duplicate campaign.', 'tapp-campaigns'));
             }
         }
+    }
+
+    /**
+     * Handle bulk actions
+     */
+    private function handle_bulk_actions() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['bulk_action'])) {
+            return;
+        }
+
+        // Verify nonce
+        if (!isset($_POST['bulk_nonce']) || !wp_verify_nonce($_POST['bulk_nonce'], 'tapp_bulk_actions')) {
+            wp_die(__('Invalid security token.', 'tapp-campaigns'));
+        }
+
+        // Verify user can manage campaigns
+        $user_id = get_current_user_id();
+        if (!tapp_campaigns_onboarding()->can_create_campaigns($user_id)) {
+            wp_die(__('You do not have permission to perform bulk actions.', 'tapp-campaigns'));
+        }
+
+        $action = sanitize_text_field($_POST['bulk_action']);
+        $campaign_ids = isset($_POST['campaign_ids']) ? array_map('intval', $_POST['campaign_ids']) : [];
+
+        if (empty($campaign_ids) || empty($action)) {
+            return;
+        }
+
+        $count = 0;
+        $errors = 0;
+
+        foreach ($campaign_ids as $campaign_id) {
+            $result = false;
+
+            switch ($action) {
+                case 'activate':
+                    $result = TAPP_Campaigns_Campaign::update_status($campaign_id, 'active');
+                    break;
+
+                case 'end':
+                    $result = TAPP_Campaigns_Campaign::update_status($campaign_id, 'ended');
+                    break;
+
+                case 'archive':
+                    $result = TAPP_Campaigns_Campaign::update_status($campaign_id, 'archived');
+                    break;
+
+                case 'delete':
+                    $result = TAPP_Campaigns_Campaign::delete($campaign_id);
+                    break;
+            }
+
+            if ($result) {
+                $count++;
+            } else {
+                $errors++;
+            }
+        }
+
+        // Redirect with message
+        $redirect_url = home_url('/campaign-manager/');
+        $redirect_url = add_query_arg([
+            'bulk_action' => $action,
+            'count' => $count,
+            'errors' => $errors,
+        ], $redirect_url);
+
+        wp_redirect($redirect_url);
+        exit;
     }
 
     private function handle_dashboard_action($action) {
