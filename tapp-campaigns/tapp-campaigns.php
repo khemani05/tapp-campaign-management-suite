@@ -72,6 +72,9 @@ add_action('plugins_loaded', function() {
         $plugin = new TAPP_Campaigns_Core();
         $plugin->init();
     }
+
+    // Initialize homepage banner system
+    require_once TAPP_CAMPAIGNS_PATH . 'frontend/class-banner.php';
 }, 10);
 
 // Admin enqueue scripts

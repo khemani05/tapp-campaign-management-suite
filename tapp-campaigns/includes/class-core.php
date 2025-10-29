@@ -201,6 +201,9 @@ class TAPP_Campaigns_Core {
                 wp_die(__('You do not have permission to access this page.', 'tapp-campaigns'));
             }
 
+            // Handle quick actions before loading dashboard
+            $this->handle_quick_actions();
+
             // Load manager dashboard
             get_header();
             include TAPP_CAMPAIGNS_PATH . 'frontend/templates/dashboard.php';
@@ -211,6 +214,42 @@ class TAPP_Campaigns_Core {
             get_header();
             include TAPP_CAMPAIGNS_PATH . 'frontend/templates/my-campaigns.php';
             get_footer();
+        }
+    }
+
+    /**
+     * Handle quick actions from dashboard
+     */
+    private function handle_quick_actions() {
+        if (!isset($_GET['action'])) {
+            return;
+        }
+
+        $action = sanitize_text_field($_GET['action']);
+        $campaign_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+        if ($action === 'duplicate' && $campaign_id) {
+            // Verify nonce
+            if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'duplicate_campaign_' . $campaign_id)) {
+                wp_die(__('Invalid security token.', 'tapp-campaigns'));
+            }
+
+            // Verify user can manage campaigns
+            $user_id = get_current_user_id();
+            if (!tapp_campaigns_onboarding()->can_create_campaigns($user_id)) {
+                wp_die(__('You do not have permission to duplicate campaigns.', 'tapp-campaigns'));
+            }
+
+            // Duplicate the campaign
+            $new_campaign_id = TAPP_Campaigns_Campaign::duplicate($campaign_id);
+
+            if ($new_campaign_id) {
+                // Redirect to edit the new campaign
+                wp_redirect(home_url('/campaign-manager/?action=edit&id=' . $new_campaign_id . '&duplicated=1'));
+                exit;
+            } else {
+                wp_die(__('Failed to duplicate campaign.', 'tapp-campaigns'));
+            }
         }
     }
 

@@ -95,7 +95,7 @@ class TAPP_Campaigns_Activator {
         ) $charset_collate;";
 
         // Participants table
-        $sql[] = "CREATE TABLE {$prefix}tapp_participants (
+        $sql[] = "CREATE TABLE {$prefix}tapp_campaign_participants (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             campaign_id BIGINT UNSIGNED NOT NULL,
             user_id BIGINT UNSIGNED NOT NULL,
@@ -104,11 +104,13 @@ class TAPP_Campaigns_Activator {
             invited_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             submitted_at DATETIME DEFAULT NULL,
             response_count INT DEFAULT 0,
+            dismissed_banner TINYINT(1) DEFAULT 0,
             UNIQUE KEY unique_campaign_user (campaign_id, user_id),
             INDEX idx_campaign (campaign_id),
             INDEX idx_user (user_id),
             INDEX idx_status (status),
-            INDEX idx_email (email)
+            INDEX idx_email (email),
+            INDEX idx_dismissed (dismissed_banner)
         ) $charset_collate;";
 
         // Responses table (with version tracking)
