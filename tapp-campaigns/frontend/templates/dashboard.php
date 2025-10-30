@@ -287,6 +287,12 @@ $aggregate_stats = $wpdb->get_row("
                                             </svg>
                                             <?php _e('View', 'tapp-campaigns'); ?>
                                         </a>
+                                        <a href="<?php echo esc_url(home_url('/campaign-manager/analytics/' . $campaign->id . '/')); ?>" class="button button-small button-analytics" title="<?php _e('View Analytics', 'tapp-campaigns'); ?>">
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                                <path d="M0 0h1v15h15v1H0V0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07z"/>
+                                            </svg>
+                                            <?php _e('Analytics', 'tapp-campaigns'); ?>
+                                        </a>
                                         <a href="<?php echo esc_url(add_query_arg(['action' => 'edit', 'id' => $campaign->id])); ?>" class="button button-small button-edit" title="<?php _e('Edit Campaign', 'tapp-campaigns'); ?>">
                                             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                                                 <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>

@@ -201,6 +201,28 @@ class TAPP_Campaigns_Core {
                 wp_die(__('You do not have permission to access this page.', 'tapp-campaigns'));
             }
 
+            // Get action
+            $action = get_query_var('campaign_action');
+
+            // Handle analytics page
+            if ($action === 'analytics') {
+                $campaign_id = get_query_var('campaign_id');
+                if (!$campaign_id) {
+                    wp_die(__('Campaign ID is required.', 'tapp-campaigns'));
+                }
+
+                // Check if user can manage this campaign
+                if (!$this->can_manage_campaign($campaign_id, $user_id)) {
+                    wp_die(__('You do not have permission to view this campaign analytics.', 'tapp-campaigns'));
+                }
+
+                // Load analytics page
+                get_header();
+                include TAPP_CAMPAIGNS_PATH . 'frontend/templates/analytics.php';
+                get_footer();
+                return;
+            }
+
             // Handle quick actions before loading dashboard
             $this->handle_quick_actions();
 
@@ -254,6 +276,239 @@ class TAPP_Campaigns_Core {
                 wp_die(__('Failed to duplicate campaign.', 'tapp-campaigns'));
             }
         }
+
+        if ($action === 'export' && $campaign_id) {
+            // Verify nonce
+            if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'export_campaign_' . $campaign_id)) {
+                wp_die(__('Invalid security token.', 'tapp-campaigns'));
+            }
+
+            // Verify user can manage campaigns
+            $user_id = get_current_user_id();
+            if (!tapp_campaigns_onboarding()->can_create_campaigns($user_id)) {
+                wp_die(__('You do not have permission to export campaigns.', 'tapp-campaigns'));
+            }
+
+            // Check if user can manage this campaign
+            if (!$this->can_manage_campaign($campaign_id, $user_id)) {
+                wp_die(__('You do not have permission to export this campaign.', 'tapp-campaigns'));
+            }
+
+            // Get export type
+            $export_type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : 'audience';
+
+            // Handle export
+            $this->handle_export($campaign_id, $export_type);
+            exit;
+        }
+    }
+
+    /**
+     * Handle CSV export
+     */
+    private function handle_export($campaign_id, $type) {
+        global $wpdb;
+
+        $campaign = TAPP_Campaigns_Campaign::get($campaign_id);
+        if (!$campaign) {
+            wp_die(__('Campaign not found.', 'tapp-campaigns'));
+        }
+
+        $filename = sanitize_title($campaign->name) . '-' . $type . '-' . date('Y-m-d') . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+
+        // Add BOM for Excel UTF-8 support
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        $participants_table = $wpdb->prefix . 'tapp_campaign_participants';
+        $responses_table = $wpdb->prefix . 'tapp_campaign_responses';
+
+        if ($type === 'audience') {
+            // Export audience list
+            fputcsv($output, [
+                'Campaign Name',
+                'User ID',
+                'Name',
+                'Email',
+                'Department',
+                'Status',
+                'Invited At',
+                'Submitted At',
+                'Submission Count'
+            ]);
+
+            $participants = $wpdb->get_results($wpdb->prepare(
+                "SELECT
+                    p.user_id,
+                    p.invited_at,
+                    p.submitted_at,
+                    u.display_name,
+                    u.user_email,
+                    (SELECT COUNT(*) FROM {$responses_table} WHERE user_id = p.user_id AND campaign_id = p.campaign_id) as submission_count
+                FROM {$participants_table} p
+                INNER JOIN {$wpdb->users} u ON p.user_id = u.ID
+                WHERE p.campaign_id = %d
+                ORDER BY u.display_name ASC",
+                $campaign_id
+            ));
+
+            foreach ($participants as $participant) {
+                $department = get_user_meta($participant->user_id, 'tapp_department', true);
+                if (empty($department)) {
+                    $department = get_user_meta($participant->user_id, 'department', true);
+                }
+
+                fputcsv($output, [
+                    $campaign->name,
+                    $participant->user_id,
+                    $participant->display_name,
+                    $participant->user_email,
+                    $department ?: '-',
+                    $participant->submitted_at ? 'Submitted' : 'Pending',
+                    $participant->invited_at,
+                    $participant->submitted_at ?: '-',
+                    $participant->submission_count
+                ]);
+            }
+
+        } elseif ($type === 'responses') {
+            // Export responses
+            fputcsv($output, [
+                'Campaign Name',
+                'User ID',
+                'Name',
+                'Email',
+                'Department',
+                'Product ID',
+                'Product Name',
+                'SKU',
+                'Color',
+                'Size',
+                'Quantity',
+                'Submitted At',
+                'Version'
+            ]);
+
+            $responses = $wpdb->get_results($wpdb->prepare(
+                "SELECT
+                    r.*,
+                    p.submitted_at,
+                    u.display_name,
+                    u.user_email
+                FROM {$responses_table} r
+                INNER JOIN {$participants_table} p ON r.user_id = p.user_id AND r.campaign_id = p.campaign_id
+                INNER JOIN {$wpdb->users} u ON r.user_id = u.ID
+                WHERE r.campaign_id = %d AND p.submitted_at IS NOT NULL
+                ORDER BY p.submitted_at DESC, u.display_name ASC",
+                $campaign_id
+            ));
+
+            foreach ($responses as $response) {
+                $product = wc_get_product($response->variation_id ? $response->variation_id : $response->product_id);
+                $department = get_user_meta($response->user_id, 'tapp_department', true);
+                if (empty($department)) {
+                    $department = get_user_meta($response->user_id, 'department', true);
+                }
+
+                $product_name = '';
+                $sku = '';
+                $color = '-';
+                $size = '-';
+
+                if ($product) {
+                    $product_name = $product->get_name();
+                    $sku = $product->get_sku();
+
+                    if ($response->variation_id && $product->is_type('variation')) {
+                        $attributes = $product->get_variation_attributes();
+                        $color = isset($attributes['attribute_pa_color']) ? $attributes['attribute_pa_color'] : '-';
+                        $size = isset($attributes['attribute_pa_size']) ? $attributes['attribute_pa_size'] : '-';
+                    }
+                }
+
+                fputcsv($output, [
+                    $campaign->name,
+                    $response->user_id,
+                    $response->display_name,
+                    $response->user_email,
+                    $department ?: '-',
+                    $response->product_id,
+                    $product_name,
+                    $sku,
+                    $color,
+                    $size,
+                    $response->quantity,
+                    $response->submitted_at,
+                    $response->version
+                ]);
+            }
+
+        } elseif ($type === 'summary') {
+            // Export product summary
+            fputcsv($output, [
+                'Campaign Name',
+                'Product ID',
+                'Variation ID',
+                'Product Name',
+                'SKU',
+                'Color',
+                'Size',
+                'Total Quantity',
+                'Number of Users'
+            ]);
+
+            $summary = $wpdb->get_results($wpdb->prepare(
+                "SELECT
+                    r.product_id,
+                    r.variation_id,
+                    SUM(r.quantity) as total_quantity,
+                    COUNT(DISTINCT r.user_id) as user_count
+                FROM {$responses_table} r
+                INNER JOIN {$participants_table} p ON r.user_id = p.user_id AND r.campaign_id = p.campaign_id
+                WHERE r.campaign_id = %d AND p.submitted_at IS NOT NULL
+                GROUP BY r.product_id, r.variation_id
+                ORDER BY total_quantity DESC",
+                $campaign_id
+            ));
+
+            foreach ($summary as $item) {
+                $product = wc_get_product($item->variation_id ? $item->variation_id : $item->product_id);
+
+                $product_name = '';
+                $sku = '';
+                $color = '-';
+                $size = '-';
+
+                if ($product) {
+                    $product_name = $product->get_name();
+                    $sku = $product->get_sku();
+
+                    if ($item->variation_id && $product->is_type('variation')) {
+                        $attributes = $product->get_variation_attributes();
+                        $color = isset($attributes['attribute_pa_color']) ? $attributes['attribute_pa_color'] : '-';
+                        $size = isset($attributes['attribute_pa_size']) ? $attributes['attribute_pa_size'] : '-';
+                    }
+                }
+
+                fputcsv($output, [
+                    $campaign->name,
+                    $item->product_id,
+                    $item->variation_id ?: '-',
+                    $product_name,
+                    $sku,
+                    $color,
+                    $size,
+                    $item->total_quantity,
+                    $item->user_count
+                ]);
+            }
+        }
+
+        fclose($output);
     }
 
     /**

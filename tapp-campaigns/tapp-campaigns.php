@@ -116,4 +116,17 @@ add_action('wp_enqueue_scripts', function() {
             'confirmSubmit' => __('Are you sure you want to submit your selections?', 'tapp-campaigns'),
         ]
     ]);
+
+    // Enqueue analytics assets on analytics page
+    $campaign_action = get_query_var('campaign_action');
+    if ($campaign_action === 'analytics') {
+        // Enqueue Chart.js from CDN
+        wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', [], '4.4.0', true);
+
+        // Enqueue analytics CSS
+        wp_enqueue_style('tapp-campaigns-analytics', TAPP_CAMPAIGNS_URL . 'assets/css/analytics.css', [], TAPP_CAMPAIGNS_VERSION);
+
+        // Enqueue analytics JS
+        wp_enqueue_script('tapp-campaigns-analytics', TAPP_CAMPAIGNS_URL . 'assets/js/analytics.js', ['jquery', 'chartjs'], TAPP_CAMPAIGNS_VERSION, true);
+    }
 });
