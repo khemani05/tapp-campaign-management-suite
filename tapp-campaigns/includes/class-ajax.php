@@ -31,6 +31,20 @@ class TAPP_Campaigns_Ajax {
 
         // Dismiss banner
         add_action('wp_ajax_tapp_dismiss_banner', [$this, 'dismiss_banner']);
+
+        // Templates
+        add_action('wp_ajax_tapp_create_template', [$this, 'create_template']);
+        add_action('wp_ajax_tapp_get_templates', [$this, 'get_templates']);
+        add_action('wp_ajax_tapp_delete_template', [$this, 'delete_template']);
+        add_action('wp_ajax_tapp_use_template', [$this, 'use_template']);
+
+        // User Groups
+        add_action('wp_ajax_tapp_create_group', [$this, 'create_group']);
+        add_action('wp_ajax_tapp_get_groups', [$this, 'get_groups']);
+        add_action('wp_ajax_tapp_get_group_members', [$this, 'get_group_members']);
+        add_action('wp_ajax_tapp_delete_group', [$this, 'delete_group']);
+        add_action('wp_ajax_tapp_add_group_member', [$this, 'add_group_member']);
+        add_action('wp_ajax_tapp_remove_group_member', [$this, 'remove_group_member']);
     }
 
     /**
@@ -461,6 +475,275 @@ class TAPP_Campaigns_Ajax {
             wp_send_json_success(['message' => __('Banner dismissed', 'tapp-campaigns')]);
         } else {
             wp_send_json_error(['message' => __('Failed to dismiss banner', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Create template from campaign
+     */
+    public function create_template() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
+        $template_name = isset($_POST['template_name']) ? sanitize_text_field($_POST['template_name']) : '';
+        $description = isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '';
+
+        if (!$campaign_id || empty($template_name)) {
+            wp_send_json_error(['message' => __('Invalid data', 'tapp-campaigns')]);
+        }
+
+        $template_id = TAPP_Campaigns_Template::create_from_campaign($campaign_id, $template_name, $description);
+
+        if ($template_id) {
+            wp_send_json_success([
+                'message' => __('Template created successfully', 'tapp-campaigns'),
+                'template_id' => $template_id
+            ]);
+        } else {
+            wp_send_json_error(['message' => __('Failed to create template', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Get templates
+     */
+    public function get_templates() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';
+
+        $args = [
+            'include_public' => true,
+        ];
+
+        if (!empty($type) && in_array($type, ['team', 'sales', 'custom'])) {
+            $args['type'] = $type;
+        }
+
+        $templates = TAPP_Campaigns_Template::get_all($args);
+
+        wp_send_json_success(['templates' => $templates]);
+    }
+
+    /**
+     * Delete template
+     */
+    public function delete_template() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $template_id = isset($_POST['template_id']) ? intval($_POST['template_id']) : 0;
+
+        if (!$template_id) {
+            wp_send_json_error(['message' => __('Invalid template', 'tapp-campaigns')]);
+        }
+
+        $result = TAPP_Campaigns_Template::delete($template_id);
+
+        if ($result) {
+            wp_send_json_success(['message' => __('Template deleted successfully', 'tapp-campaigns')]);
+        } else {
+            wp_send_json_error(['message' => __('Failed to delete template', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Use template (get template data for campaign creation)
+     */
+    public function use_template() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $template_id = isset($_POST['template_id']) ? intval($_POST['template_id']) : 0;
+
+        if (!$template_id) {
+            wp_send_json_error(['message' => __('Invalid template', 'tapp-campaigns')]);
+        }
+
+        $template = TAPP_Campaigns_Template::get($template_id);
+
+        if ($template) {
+            wp_send_json_success(['template' => $template]);
+        } else {
+            wp_send_json_error(['message' => __('Template not found', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Create user group
+     */
+    public function create_group() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : '';
+        $description = isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '';
+        $department = isset($_POST['department']) ? sanitize_text_field($_POST['department']) : '';
+        $user_ids = isset($_POST['user_ids']) ? array_map('intval', $_POST['user_ids']) : [];
+
+        if (empty($name)) {
+            wp_send_json_error(['message' => __('Group name is required', 'tapp-campaigns')]);
+        }
+
+        $data = [
+            'name' => $name,
+            'description' => $description,
+            'department' => $department,
+            'user_ids' => $user_ids,
+        ];
+
+        $group_id = TAPP_Campaigns_User_Group::create($data);
+
+        if ($group_id) {
+            wp_send_json_success([
+                'message' => __('Group created successfully', 'tapp-campaigns'),
+                'group_id' => $group_id
+            ]);
+        } else {
+            wp_send_json_error(['message' => __('Failed to create group', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Get user groups
+     */
+    public function get_groups() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $department = isset($_POST['department']) ? sanitize_text_field($_POST['department']) : '';
+
+        $args = [];
+
+        if (!empty($search)) {
+            $args['search'] = $search;
+        }
+
+        if (!empty($department)) {
+            $args['department'] = $department;
+        }
+
+        $groups = TAPP_Campaigns_User_Group::get_all($args);
+
+        wp_send_json_success(['groups' => $groups]);
+    }
+
+    /**
+     * Get group members
+     */
+    public function get_group_members() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : 0;
+
+        if (!$group_id) {
+            wp_send_json_error(['message' => __('Invalid group', 'tapp-campaigns')]);
+        }
+
+        $members = TAPP_Campaigns_User_Group::get_members($group_id);
+
+        wp_send_json_success(['members' => $members]);
+    }
+
+    /**
+     * Delete user group
+     */
+    public function delete_group() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : 0;
+
+        if (!$group_id) {
+            wp_send_json_error(['message' => __('Invalid group', 'tapp-campaigns')]);
+        }
+
+        $result = TAPP_Campaigns_User_Group::delete($group_id);
+
+        if ($result) {
+            wp_send_json_success(['message' => __('Group deleted successfully', 'tapp-campaigns')]);
+        } else {
+            wp_send_json_error(['message' => __('Failed to delete group', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Add member to group
+     */
+    public function add_group_member() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : 0;
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+
+        if (!$group_id || !$user_id) {
+            wp_send_json_error(['message' => __('Invalid data', 'tapp-campaigns')]);
+        }
+
+        $result = TAPP_Campaigns_User_Group::add_member($group_id, $user_id);
+
+        if ($result) {
+            wp_send_json_success(['message' => __('Member added successfully', 'tapp-campaigns')]);
+        } else {
+            wp_send_json_error(['message' => __('Failed to add member', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Remove member from group
+     */
+    public function remove_group_member() {
+        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : 0;
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+
+        if (!$group_id || !$user_id) {
+            wp_send_json_error(['message' => __('Invalid data', 'tapp-campaigns')]);
+        }
+
+        $result = TAPP_Campaigns_User_Group::remove_member($group_id, $user_id);
+
+        if ($result) {
+            wp_send_json_success(['message' => __('Member removed successfully', 'tapp-campaigns')]);
+        } else {
+            wp_send_json_error(['message' => __('Failed to remove member', 'tapp-campaigns')]);
         }
     }
 }
