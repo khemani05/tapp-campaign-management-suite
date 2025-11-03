@@ -146,6 +146,48 @@ class TAPP_Campaigns_Activator {
             UNIQUE KEY unique_campaign_meta (campaign_id, meta_key(191))
         ) $charset_collate;";
 
+        // Campaign templates table
+        $sql[] = "CREATE TABLE {$prefix}tapp_campaign_templates (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            description TEXT DEFAULT NULL,
+            type ENUM('team', 'sales', 'custom') DEFAULT 'custom',
+            creator_id BIGINT UNSIGNED NOT NULL,
+            template_data LONGTEXT NOT NULL,
+            product_ids TEXT DEFAULT NULL,
+            is_public TINYINT(1) DEFAULT 0,
+            usage_count INT DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_creator (creator_id),
+            INDEX idx_type (type),
+            INDEX idx_public (is_public)
+        ) $charset_collate;";
+
+        // User groups table
+        $sql[] = "CREATE TABLE {$prefix}tapp_user_groups (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            description TEXT DEFAULT NULL,
+            creator_id BIGINT UNSIGNED NOT NULL,
+            department VARCHAR(100) DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_creator (creator_id),
+            INDEX idx_department (department)
+        ) $charset_collate;";
+
+        // User group members junction table
+        $sql[] = "CREATE TABLE {$prefix}tapp_user_group_members (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            group_id BIGINT UNSIGNED NOT NULL,
+            user_id BIGINT UNSIGNED NOT NULL,
+            added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_group_user (group_id, user_id),
+            INDEX idx_group (group_id),
+            INDEX idx_user (user_id)
+        ) $charset_collate;";
+
         foreach ($sql as $query) {
             dbDelta($query);
         }

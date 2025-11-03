@@ -36,6 +36,9 @@ class TAPP_Campaigns_Core {
             'class-email',
             'class-ajax',
             'class-cron',
+            'class-template',
+            'class-user-group',
+            'class-templates',
         ];
 
         foreach ($includes as $file) {
