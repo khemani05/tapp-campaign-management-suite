@@ -302,6 +302,24 @@ class TAPP_Campaigns_Campaign {
     }
 
     /**
+     * Get preview URL
+     */
+    public static function get_preview_url($campaign_id) {
+        $campaign = self::get($campaign_id);
+        if (!$campaign) {
+            return '';
+        }
+
+        // Generate secure preview token
+        $preview_token = wp_hash('preview_' . $campaign->id . '_' . $campaign->creator_id);
+
+        return add_query_arg([
+            'preview_mode' => '1',
+            'preview_token' => $preview_token,
+        ], home_url('/campaign/' . $campaign->slug . '/'));
+    }
+
+    /**
      * Get edit URL
      */
     public static function get_edit_url($campaign_id) {

@@ -199,9 +199,15 @@ $can_edit = !$is_ended && (!$has_submitted || $campaign->edit_policy !== 'once')
                 </div>
 
                 <div class="tapp-form-actions">
-                    <button type="submit" class="button button-primary button-large" id="submit-campaign">
-                        <?php echo $has_submitted ? __('Update Selections', 'tapp-campaigns') : __('Submit Selections', 'tapp-campaigns'); ?>
-                    </button>
+                    <?php if (isset($preview_mode) && $preview_mode): ?>
+                        <button type="button" class="button button-primary button-large" disabled>
+                            <?php _e('Submit Disabled (Preview Mode)', 'tapp-campaigns'); ?>
+                        </button>
+                    <?php else: ?>
+                        <button type="submit" class="button button-primary button-large" id="submit-campaign">
+                            <?php echo $has_submitted ? __('Update Selections', 'tapp-campaigns') : __('Submit Selections', 'tapp-campaigns'); ?>
+                        </button>
+                    <?php endif; ?>
                 </div>
             </form>
         <?php endif; ?>

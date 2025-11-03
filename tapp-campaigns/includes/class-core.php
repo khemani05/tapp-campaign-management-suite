@@ -39,6 +39,7 @@ class TAPP_Campaigns_Core {
             'class-template',
             'class-user-group',
             'class-templates',
+            'class-payment',
         ];
 
         foreach ($includes as $file) {
@@ -68,6 +69,9 @@ class TAPP_Campaigns_Core {
 
         // Initialize AJAX handlers
         $this->ajax = new TAPP_Campaigns_Ajax();
+
+        // Initialize payment handler
+        new TAPP_Campaigns_Payment();
 
         // Initialize cron jobs
         $cron = new TAPP_Campaigns_Cron();
@@ -101,6 +105,8 @@ class TAPP_Campaigns_Core {
         $vars[] = 'campaign_page';
         $vars[] = 'campaign_action';
         $vars[] = 'campaign_id';
+        $vars[] = 'preview_mode';
+        $vars[] = 'preview_token';
         return $vars;
     }
 
@@ -162,6 +168,10 @@ class TAPP_Campaigns_Core {
     }
 
     private function load_campaign_template($slug) {
+        // Check for preview mode
+        $preview_mode = get_query_var('preview_mode');
+        $preview_token = get_query_var('preview_token');
+
         if (!is_user_logged_in()) {
             wp_redirect(wc_get_page_permalink('myaccount') . '?redirect=' . urlencode($_SERVER['REQUEST_URI']));
             exit;
@@ -177,8 +187,32 @@ class TAPP_Campaigns_Core {
             exit;
         }
 
-        // Check if user is participant
         $user_id = get_current_user_id();
+
+        // Handle preview mode
+        if ($preview_mode && $preview_token) {
+            // Verify preview token
+            $expected_token = wp_hash('preview_' . $campaign->id . '_' . $campaign->creator_id);
+            if ($preview_token !== $expected_token) {
+                wp_die(__('Invalid preview token.', 'tapp-campaigns'));
+            }
+
+            // Check if user can manage this campaign
+            if (!$this->can_manage_campaign($campaign->id, $user_id)) {
+                wp_die(__('You do not have permission to preview this campaign.', 'tapp-campaigns'));
+            }
+
+            // Set preview mode flag for template
+            define('TAPP_CAMPAIGN_PREVIEW_MODE', true);
+
+            // Load campaign page template
+            get_header();
+            include TAPP_CAMPAIGNS_PATH . 'frontend/templates/campaign-page.php';
+            get_footer();
+            return;
+        }
+
+        // Normal mode - check if user is participant
         if (!TAPP_Campaigns_Participant::is_participant($campaign->id, $user_id)) {
             // Check if user has permission to view (manager/ceo/admin)
             if (!$this->can_manage_campaign($campaign->id, $user_id)) {

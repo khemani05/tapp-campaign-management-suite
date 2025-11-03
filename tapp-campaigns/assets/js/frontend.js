@@ -168,8 +168,14 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        alert(response.data.message);
-                        location.reload();
+                        // Check if redirect URL is provided (for payment-enabled campaigns)
+                        if (response.data.redirect) {
+                            alert(response.data.message);
+                            window.location.href = response.data.redirect;
+                        } else {
+                            alert(response.data.message);
+                            location.reload();
+                        }
                     } else {
                         alert(response.data.message || 'An error occurred');
                         $form.find('button[type="submit"]').prop('disabled', false).text('Submit Selections');

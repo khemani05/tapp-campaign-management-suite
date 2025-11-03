@@ -177,15 +177,32 @@ class TAPP_Campaigns_Ajax {
         $result = TAPP_Campaigns_Response::create($campaign_id, $user_id, $validated_selections);
 
         if ($result) {
-            // Send confirmation email
-            if ($campaign->send_confirmation) {
-                TAPP_Campaigns_Email::send_confirmation($campaign_id, $user_id);
-            }
+            // Check if payment is enabled for this campaign
+            if ($campaign->payment_enabled) {
+                // Add items to WooCommerce cart
+                $cart_result = TAPP_Campaigns_Payment::add_to_cart($campaign_id, $user_id, $validated_selections);
 
-            wp_send_json_success([
-                'message' => __('Your selections have been submitted successfully!', 'tapp-campaigns'),
-                'redirect' => false,
-            ]);
+                if (is_wp_error($cart_result)) {
+                    wp_send_json_error(['message' => $cart_result->get_error_message()]);
+                }
+
+                // Redirect to checkout
+                wp_send_json_success([
+                    'message' => __('Redirecting to checkout...', 'tapp-campaigns'),
+                    'redirect' => $cart_result['checkout_url'],
+                    'cart_total' => $cart_result['total_price'],
+                ]);
+            } else {
+                // Send confirmation email for non-payment campaigns
+                if ($campaign->send_confirmation) {
+                    TAPP_Campaigns_Email::send_confirmation($campaign_id, $user_id);
+                }
+
+                wp_send_json_success([
+                    'message' => __('Your selections have been submitted successfully!', 'tapp-campaigns'),
+                    'redirect' => false,
+                ]);
+            }
         } else {
             wp_send_json_error(['message' => __('Failed to save your selections', 'tapp-campaigns')]);
         }
