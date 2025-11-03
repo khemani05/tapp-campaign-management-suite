@@ -114,7 +114,7 @@ class TAPP_Campaigns_Activator {
         ) $charset_collate;";
 
         // Responses table (with version tracking)
-        $sql[] = "CREATE TABLE {$prefix}tapp_responses (
+        $sql[] = "CREATE TABLE {$prefix}tapp_campaign_responses (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             campaign_id BIGINT UNSIGNED NOT NULL,
             user_id BIGINT UNSIGNED NOT NULL,
