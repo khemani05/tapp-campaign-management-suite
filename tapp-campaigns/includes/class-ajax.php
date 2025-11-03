@@ -23,8 +23,14 @@ class TAPP_Campaigns_Ajax {
         // Get campaign stats
         add_action('wp_ajax_tapp_get_stats', [$this, 'get_stats']);
 
-        // Delete response (manager action)
+        // Analytics page actions
+        add_action('wp_ajax_tapp_load_response', [$this, 'load_response']);
         add_action('wp_ajax_tapp_delete_response', [$this, 'delete_response']);
+        add_action('wp_ajax_tapp_send_reminder', [$this, 'send_reminder']);
+        add_action('wp_ajax_tapp_remove_participant', [$this, 'remove_participant']);
+
+        // Dismiss banner
+        add_action('wp_ajax_tapp_dismiss_banner', [$this, 'dismiss_banner']);
     }
 
     /**
@@ -194,10 +200,135 @@ class TAPP_Campaigns_Ajax {
     }
 
     /**
+     * Load user response for viewing/editing
+     */
+    public function load_response() {
+        check_ajax_referer('tapp_analytics_nonce', 'nonce');
+
+        $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : 'view';
+
+        if (!$campaign_id || !$user_id) {
+            wp_send_json_error(['message' => __('Invalid data', 'tapp-campaigns')]);
+        }
+
+        // Check permissions
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        // Get user responses
+        global $wpdb;
+        $responses_table = $wpdb->prefix . 'tapp_campaign_responses';
+        $participants_table = $wpdb->prefix . 'tapp_campaign_participants';
+
+        $responses = $wpdb->get_results($wpdb->prepare(
+            "SELECT r.* FROM {$responses_table} r
+            INNER JOIN {$participants_table} p ON r.user_id = p.user_id AND r.campaign_id = p.campaign_id
+            WHERE r.campaign_id = %d AND r.user_id = %d
+            ORDER BY r.version DESC",
+            $campaign_id,
+            $user_id
+        ));
+
+        if (empty($responses)) {
+            wp_send_json_error(['message' => __('No response found', 'tapp-campaigns')]);
+        }
+
+        // Get user info
+        $user = get_userdata($user_id);
+        $participant = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$participants_table} WHERE campaign_id = %d AND user_id = %d",
+            $campaign_id,
+            $user_id
+        ));
+
+        // Build HTML
+        ob_start();
+        ?>
+        <div class="response-details">
+            <div class="response-header">
+                <p><strong><?php _e('Participant:', 'tapp-campaigns'); ?></strong> <?php echo esc_html($user->display_name); ?> (<?php echo esc_html($user->user_email); ?>)</p>
+                <p><strong><?php _e('Submitted:', 'tapp-campaigns'); ?></strong> <?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($participant->submitted_at)); ?></p>
+                <p><strong><?php _e('Total Versions:', 'tapp-campaigns'); ?></strong> <?php echo count($responses); ?></p>
+            </div>
+
+            <?php if ($mode === 'view'): ?>
+                <h3><?php _e('Latest Selections', 'tapp-campaigns'); ?></h3>
+                <table class="response-table">
+                    <thead>
+                        <tr>
+                            <th><?php _e('Product', 'tapp-campaigns'); ?></th>
+                            <th><?php _e('SKU', 'tapp-campaigns'); ?></th>
+                            <th><?php _e('Color', 'tapp-campaigns'); ?></th>
+                            <th><?php _e('Size', 'tapp-campaigns'); ?></th>
+                            <th><?php _e('Quantity', 'tapp-campaigns'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($responses as $response): ?>
+                            <?php
+                            $product = wc_get_product($response->variation_id ? $response->variation_id : $response->product_id);
+                            $color = $response->color ?: '-';
+                            $size = $response->size ?: '-';
+                            ?>
+                            <tr>
+                                <td><strong><?php echo esc_html($product ? $product->get_name() : __('Product not found', 'tapp-campaigns')); ?></strong></td>
+                                <td><?php echo esc_html($product ? $product->get_sku() : '-'); ?></td>
+                                <td><?php echo esc_html(ucfirst($color)); ?></td>
+                                <td><?php echo esc_html(strtoupper($size)); ?></td>
+                                <td><?php echo esc_html($response->quantity); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <h3><?php _e('Edit Response', 'tapp-campaigns'); ?></h3>
+                <p class="description"><?php _e('This feature is coming soon. For now, the participant can edit their own response by visiting the campaign page.', 'tapp-campaigns'); ?></p>
+            <?php endif; ?>
+        </div>
+
+        <style>
+        .response-details {
+            padding: 10px 0;
+        }
+        .response-header {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .response-header p {
+            margin: 5px 0;
+        }
+        .response-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .response-table th,
+        .response-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .response-table th {
+            background: #f9f9f9;
+            font-weight: 600;
+        }
+        </style>
+        <?php
+        $html = ob_get_clean();
+
+        wp_send_json_success(['html' => $html]);
+    }
+
+    /**
      * Delete user response (manager action)
      */
     public function delete_response() {
-        check_ajax_referer('tapp_campaigns_admin', 'nonce');
+        check_ajax_referer('tapp_analytics_nonce', 'nonce');
 
         $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
@@ -207,16 +338,129 @@ class TAPP_Campaigns_Ajax {
         }
 
         // Check permissions
-        if (!tapp_campaigns_onboarding()->can_edit_campaign($campaign_id, get_current_user_id())) {
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
             wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
         }
 
-        $result = TAPP_Campaigns_Response::delete($campaign_id, $user_id);
+        // Delete responses
+        global $wpdb;
+        $responses_table = $wpdb->prefix . 'tapp_campaign_responses';
+        $participants_table = $wpdb->prefix . 'tapp_campaign_participants';
 
-        if ($result) {
-            wp_send_json_success(['message' => __('Response deleted successfully', 'tapp-campaigns')]);
+        // Delete all response versions
+        $result = $wpdb->delete($responses_table, [
+            'campaign_id' => $campaign_id,
+            'user_id' => $user_id
+        ]);
+
+        // Reset participant submission status
+        $wpdb->update(
+            $participants_table,
+            [
+                'submitted_at' => null,
+                'updated_at' => current_time('mysql')
+            ],
+            [
+                'campaign_id' => $campaign_id,
+                'user_id' => $user_id
+            ]
+        );
+
+        if ($result !== false) {
+            wp_send_json_success(['message' => __('Response deleted successfully. Participant can now submit again.', 'tapp-campaigns')]);
         } else {
             wp_send_json_error(['message' => __('Failed to delete response', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Send reminder email to participant
+     */
+    public function send_reminder() {
+        check_ajax_referer('tapp_analytics_nonce', 'nonce');
+
+        $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+
+        if (!$campaign_id || !$user_id) {
+            wp_send_json_error(['message' => __('Invalid data', 'tapp-campaigns')]);
+        }
+
+        // Check permissions
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        // Send reminder email
+        $result = TAPP_Campaigns_Email::send_reminder($campaign_id, $user_id);
+
+        if ($result) {
+            wp_send_json_success(['message' => __('Reminder email sent successfully', 'tapp-campaigns')]);
+        } else {
+            wp_send_json_error(['message' => __('Failed to send reminder email', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Remove participant from campaign
+     */
+    public function remove_participant() {
+        check_ajax_referer('tapp_analytics_nonce', 'nonce');
+
+        $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+
+        if (!$campaign_id || !$user_id) {
+            wp_send_json_error(['message' => __('Invalid data', 'tapp-campaigns')]);
+        }
+
+        // Check permissions
+        if (!tapp_campaigns_onboarding()->can_create_campaigns(get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        // Remove participant
+        $result = TAPP_Campaigns_Participant::remove($campaign_id, $user_id);
+
+        if ($result) {
+            wp_send_json_success(['message' => __('Participant removed successfully', 'tapp-campaigns')]);
+        } else {
+            wp_send_json_error(['message' => __('Failed to remove participant', 'tapp-campaigns')]);
+        }
+    }
+
+    /**
+     * Dismiss campaign banner
+     */
+    public function dismiss_banner() {
+        check_ajax_referer('tapp_campaigns_frontend', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => __('Please log in', 'tapp-campaigns')]);
+        }
+
+        $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
+
+        if (!$campaign_id) {
+            wp_send_json_error(['message' => __('Invalid campaign', 'tapp-campaigns')]);
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'tapp_campaign_participants';
+
+        $result = $wpdb->update(
+            $table,
+            ['dismissed_banner' => 1],
+            [
+                'campaign_id' => $campaign_id,
+                'user_id' => get_current_user_id()
+            ]
+        );
+
+        if ($result !== false) {
+            wp_send_json_success(['message' => __('Banner dismissed', 'tapp-campaigns')]);
+        } else {
+            wp_send_json_error(['message' => __('Failed to dismiss banner', 'tapp-campaigns')]);
         }
     }
 }
