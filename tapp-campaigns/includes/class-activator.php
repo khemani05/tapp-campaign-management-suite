@@ -188,6 +188,25 @@ class TAPP_Campaigns_Activator {
             INDEX idx_user (user_id)
         ) $charset_collate;";
 
+        // Activity log table
+        $sql[] = "CREATE TABLE {$prefix}tapp_activity_log (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            campaign_id BIGINT UNSIGNED DEFAULT NULL,
+            user_id BIGINT UNSIGNED DEFAULT NULL,
+            action VARCHAR(100) NOT NULL,
+            action_type ENUM('campaign', 'participant', 'response', 'template', 'group', 'system') NOT NULL DEFAULT 'campaign',
+            description TEXT DEFAULT NULL,
+            metadata LONGTEXT DEFAULT NULL,
+            ip_address VARCHAR(45) DEFAULT NULL,
+            user_agent VARCHAR(255) DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_campaign (campaign_id),
+            INDEX idx_user (user_id),
+            INDEX idx_action (action),
+            INDEX idx_action_type (action_type),
+            INDEX idx_created (created_at)
+        ) $charset_collate;";
+
         foreach ($sql as $query) {
             dbDelta($query);
         }

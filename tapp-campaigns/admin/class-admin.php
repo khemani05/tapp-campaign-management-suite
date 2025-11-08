@@ -37,6 +37,15 @@ class TAPP_Campaigns_Admin {
             'tapp-campaigns-settings',
             [$this, 'settings_page']
         );
+
+        add_submenu_page(
+            'tapp-campaigns',
+            __('Activity Log', 'tapp-campaigns'),
+            __('Activity Log', 'tapp-campaigns'),
+            'view_all_campaigns',
+            'tapp-activity-log',
+            [$this, 'activity_log_page']
+        );
     }
 
     /**
@@ -64,6 +73,13 @@ class TAPP_Campaigns_Admin {
         }
 
         include TAPP_CAMPAIGNS_PATH . 'admin/views/settings.php';
+    }
+
+    /**
+     * Activity Log page
+     */
+    public function activity_log_page() {
+        include TAPP_CAMPAIGNS_PATH . 'admin/views/activity-log.php';
     }
 
     /**

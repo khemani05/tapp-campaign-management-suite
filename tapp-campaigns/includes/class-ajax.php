@@ -177,6 +177,9 @@ class TAPP_Campaigns_Ajax {
         $result = TAPP_Campaigns_Response::create($campaign_id, $user_id, $validated_selections);
 
         if ($result) {
+            // Log activity
+            TAPP_Campaigns_Activity_Log::log_response_submitted($campaign_id, $user_id, count($validated_selections));
+
             // Check if payment is enabled for this campaign
             if ($campaign->payment_enabled) {
                 // Add items to WooCommerce cart

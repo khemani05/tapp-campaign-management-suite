@@ -40,6 +40,8 @@ class TAPP_Campaigns_Core {
             'class-user-group',
             'class-templates',
             'class-payment',
+            'class-purchase-order',
+            'class-activity-log',
         ];
 
         foreach ($includes as $file) {
