@@ -42,6 +42,7 @@ class TAPP_Campaigns_Core {
             'class-payment',
             'class-purchase-order',
             'class-activity-log',
+            'class-google-sheets',
         ];
 
         foreach ($includes as $file) {

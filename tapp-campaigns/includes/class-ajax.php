@@ -45,6 +45,9 @@ class TAPP_Campaigns_Ajax {
         add_action('wp_ajax_tapp_delete_group', [$this, 'delete_group']);
         add_action('wp_ajax_tapp_add_group_member', [$this, 'add_group_member']);
         add_action('wp_ajax_tapp_remove_group_member', [$this, 'remove_group_member']);
+
+        // Google Sheets Export
+        add_action('wp_ajax_tapp_export_to_google_sheets', [$this, 'export_to_google_sheets']);
     }
 
     /**
@@ -765,5 +768,59 @@ class TAPP_Campaigns_Ajax {
         } else {
             wp_send_json_error(['message' => __('Failed to remove member', 'tapp-campaigns')]);
         }
+    }
+
+    /**
+     * Export campaign to Google Sheets
+     */
+    public function export_to_google_sheets() {
+        check_ajax_referer('tapp_analytics_nonce', 'nonce');
+
+        $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
+        $spreadsheet_id = isset($_POST['spreadsheet_id']) ? sanitize_text_field($_POST['spreadsheet_id']) : '';
+
+        if (!$campaign_id) {
+            wp_send_json_error(['message' => __('Invalid campaign ID', 'tapp-campaigns')]);
+        }
+
+        // Check permissions
+        if (!tapp_campaigns_onboarding()->can_edit_campaign($campaign_id, get_current_user_id())) {
+            wp_send_json_error(['message' => __('Unauthorized', 'tapp-campaigns')]);
+        }
+
+        // Check if Google Sheets is configured
+        if (!TAPP_Campaigns_Google_Sheets::is_configured()) {
+            wp_send_json_error(['message' => __('Google Sheets integration is not configured', 'tapp-campaigns')]);
+        }
+
+        // Ensure token is valid
+        if (!TAPP_Campaigns_Google_Sheets::ensure_valid_token()) {
+            wp_send_json_error(['message' => __('Failed to refresh Google Sheets access token', 'tapp-campaigns')]);
+        }
+
+        // If spreadsheet ID not provided, create a new one
+        if (empty($spreadsheet_id)) {
+            $access_token = get_option('tapp_google_sheets_access_token');
+            $spreadsheet_id = TAPP_Campaigns_Google_Sheets::create_new_sheet($campaign_id, $access_token);
+
+            if (is_wp_error($spreadsheet_id)) {
+                wp_send_json_error(['message' => $spreadsheet_id->get_error_message()]);
+            }
+        }
+
+        // Export to sheet
+        $result = TAPP_Campaigns_Google_Sheets::export_to_sheet($campaign_id, $spreadsheet_id);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(['message' => $result->get_error_message()]);
+        }
+
+        $spreadsheet_url = TAPP_Campaigns_Google_Sheets::get_spreadsheet_url($spreadsheet_id);
+
+        wp_send_json_success([
+            'message' => __('Successfully exported to Google Sheets', 'tapp-campaigns'),
+            'spreadsheet_id' => $spreadsheet_id,
+            'spreadsheet_url' => $spreadsheet_url,
+        ]);
     }
 }
