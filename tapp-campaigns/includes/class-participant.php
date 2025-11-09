@@ -59,8 +59,16 @@ class TAPP_Campaigns_Participant {
      */
     public static function remove($campaign_id, $user_id) {
         global $wpdb;
-        $table = $wpdb->prefix . 'tapp_participants';
+        $table = $wpdb->prefix . 'tapp_campaign_participants';
 
+        // Also delete their responses
+        $responses_table = $wpdb->prefix . 'tapp_campaign_responses';
+        $wpdb->delete($responses_table, [
+            'campaign_id' => $campaign_id,
+            'user_id' => $user_id,
+        ]);
+
+        // Delete participant
         $result = $wpdb->delete($table, [
             'campaign_id' => $campaign_id,
             'user_id' => $user_id,

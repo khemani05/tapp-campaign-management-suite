@@ -5,51 +5,81 @@
 (function($) {
     'use strict';
 
-    // Countdown Timer
+    // Countdown Timer - handles all templates
     function initCountdown() {
-        $('.tapp-countdown').each(function() {
-            var $countdown = $(this);
-            var endTime = parseInt($countdown.data('end-time')) * 1000;
-            var $timer = $countdown.find('.countdown-timer');
+        // Handle multiple countdown selectors for different templates
+        var countdownSelectors = [
+            '.tapp-countdown',
+            '.countdown-compact',
+            '.hero-countdown',
+            '.timer-modern'
+        ];
 
-            function updateCountdown() {
-                var now = new Date().getTime();
-                var distance = endTime - now;
+        countdownSelectors.forEach(function(selector) {
+            $(selector).each(function() {
+                var $countdown = $(this);
+                var endTime = parseInt($countdown.data('end-time')) * 1000;
+                var $timer = $countdown.find('.countdown-timer, .countdown-timer-hero');
 
-                if (distance < 0) {
-                    $timer.text('Ended');
-                    return;
+                if (!$timer.length) {
+                    $timer = $countdown;
                 }
 
-                var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                function updateCountdown() {
+                    var now = new Date().getTime();
+                    var distance = endTime - now;
 
-                var text = '';
-                if (days > 0) {
-                    text = days + 'd ' + hours + 'h ' + minutes + 'm';
-                } else if (hours > 0) {
-                    text = hours + 'h ' + minutes + 'm ' + seconds + 's';
-                } else {
-                    text = minutes + 'm ' + seconds + 's';
+                    if (distance < 0) {
+                        $timer.text('Ended');
+                        return;
+                    }
+
+                    var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    var text = '';
+                    if (days > 0) {
+                        text = days + 'd ' + hours + 'h ' + minutes + 'm';
+                    } else if (hours > 0) {
+                        text = hours + 'h ' + minutes + 'm ' + seconds + 's';
+                    } else {
+                        text = minutes + 'm ' + seconds + 's';
+                    }
+
+                    $timer.text(text);
                 }
 
-                $timer.text(text);
-            }
-
-            updateCountdown();
-            setInterval(updateCountdown, 1000);
+                updateCountdown();
+                setInterval(updateCountdown, 1000);
+            });
         });
     }
 
-    // Campaign Form
+    // Campaign Form - supports all templates
     function initCampaignForm() {
         var $form = $('#tapp-campaign-form');
         if (!$form.length) return;
 
-        var $counter = $('.selection-counter .count');
-        var selectionLimit = parseInt($form.find('input[name="campaign_id"]').closest('.tapp-selection-info').find('.selection-limit').text().match(/\d+/)[0]);
+        // Find counter element - different templates have different locations
+        var $counter = $('.selection-counter .count, .selection-counter-hero .count, .selection-counter-modern .count, .selection-bar .count');
+
+        // Get selection limit from various possible locations
+        var selectionLimit = 1;
+        var limitText = $('.tapp-selection-info, .selection-header-hero, .selection-bar').text();
+        var limitMatch = limitText.match(/(\d+)/);
+        if (limitMatch) {
+            selectionLimit = parseInt(limitMatch[1]);
+        }
+
+        // All possible card container selectors
+        var cardSelectors = [
+            '.tapp-product-card',
+            '.product-card-modern',
+            '.product-item-minimal',
+            '.product-card-hero'
+        ];
 
         // Track selections
         function updateCounter() {
@@ -63,15 +93,17 @@
                 $form.find('.product-checkbox').prop('disabled', false);
             }
 
-            // Update card styling
-            $form.find('.tapp-product-card').each(function() {
-                var $card = $(this);
-                var $checkbox = $card.find('.product-checkbox');
-                if ($checkbox.is(':checked')) {
-                    $card.addClass('selected');
-                } else {
-                    $card.removeClass('selected');
-                }
+            // Update card styling for all template types
+            cardSelectors.forEach(function(selector) {
+                $form.find(selector).each(function() {
+                    var $card = $(this);
+                    var $checkbox = $card.find('.product-checkbox');
+                    if ($checkbox.is(':checked')) {
+                        $card.addClass('selected');
+                    } else {
+                        $card.removeClass('selected');
+                    }
+                });
             });
         }
 
@@ -84,7 +116,7 @@
             var selectedCount = $form.find('.product-checkbox:checked').length;
 
             if (selectedCount === 0) {
-                alert(tappCampaigns.strings.selectProduct);
+                alert(tappCampaigns.strings.selectProduct || 'Please select at least one item');
                 return false;
             }
 
@@ -93,10 +125,21 @@
                 return false;
             }
 
-            // Collect selections
+            // Collect selections from any template type
             var selections = [];
             $form.find('.product-checkbox:checked').each(function() {
-                var $card = $(this).closest('.tapp-product-card');
+                // Find parent card - try all possible selectors
+                var $card = null;
+                cardSelectors.forEach(function(selector) {
+                    if (!$card || !$card.length) {
+                        $card = $(this).closest(selector);
+                    }
+                }.bind(this));
+
+                if (!$card || !$card.length) {
+                    return;
+                }
+
                 var productId = $card.data('product-id');
 
                 var selection = {
@@ -125,8 +168,14 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        alert(response.data.message);
-                        location.reload();
+                        // Check if redirect URL is provided (for payment-enabled campaigns)
+                        if (response.data.redirect) {
+                            alert(response.data.message);
+                            window.location.href = response.data.redirect;
+                        } else {
+                            alert(response.data.message);
+                            location.reload();
+                        }
                     } else {
                         alert(response.data.message || 'An error occurred');
                         $form.find('button[type="submit"]').prop('disabled', false).text('Submit Selections');

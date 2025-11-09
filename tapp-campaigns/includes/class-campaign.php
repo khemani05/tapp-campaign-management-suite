@@ -302,6 +302,24 @@ class TAPP_Campaigns_Campaign {
     }
 
     /**
+     * Get preview URL
+     */
+    public static function get_preview_url($campaign_id) {
+        $campaign = self::get($campaign_id);
+        if (!$campaign) {
+            return '';
+        }
+
+        // Generate secure preview token
+        $preview_token = wp_hash('preview_' . $campaign->id . '_' . $campaign->creator_id);
+
+        return add_query_arg([
+            'preview_mode' => '1',
+            'preview_token' => $preview_token,
+        ], home_url('/campaign/' . $campaign->slug . '/'));
+    }
+
+    /**
      * Get edit URL
      */
     public static function get_edit_url($campaign_id) {
@@ -347,5 +365,87 @@ class TAPP_Campaigns_Campaign {
      */
     public static function get_stats($campaign_id) {
         return TAPP_Campaigns_Database::get_campaign_stats($campaign_id);
+    }
+
+    /**
+     * Duplicate a campaign
+     */
+    public static function duplicate($campaign_id) {
+        $original = self::get($campaign_id);
+        if (!$original) {
+            return false;
+        }
+
+        // Prepare new campaign data
+        $new_data = [
+            'name' => $original->name . ' (Copy)',
+            'type' => $original->type,
+            'status' => 'draft',
+            'creator_id' => get_current_user_id(),
+            'department' => $original->department,
+            'notes' => $original->notes,
+            'description' => $original->description,
+            'selection_limit' => $original->selection_limit,
+            'selection_min' => $original->selection_min,
+            'edit_policy' => $original->edit_policy,
+            'ask_color' => $original->ask_color,
+            'color_config' => $original->color_config,
+            'allowed_colors' => $original->allowed_colors,
+            'ask_size' => $original->ask_size,
+            'ask_quantity' => $original->ask_quantity,
+            'min_quantity' => $original->min_quantity,
+            'max_quantity' => $original->max_quantity,
+            'page_template' => $original->page_template,
+            'template_primary_color' => $original->template_primary_color,
+            'template_button_color' => $original->template_button_color,
+            'template_hero_image' => $original->template_hero_image,
+            'payment_enabled' => $original->payment_enabled,
+            'generate_po' => $original->generate_po,
+            'generate_invoice' => $original->generate_invoice,
+            'invoice_recipients' => $original->invoice_recipients,
+            'send_invitation' => $original->send_invitation,
+            'send_confirmation' => $original->send_confirmation,
+            'send_reminder' => $original->send_reminder,
+            'reminder_hours' => $original->reminder_hours,
+            'webhook_url' => $original->webhook_url,
+        ];
+
+        // Create new campaign
+        $new_campaign_id = self::create($new_data);
+        if (!$new_campaign_id) {
+            return false;
+        }
+
+        // Copy products
+        $products = self::get_products($campaign_id);
+        if (!empty($products)) {
+            $product_ids = array_map(function($p) {
+                return $p->product_id;
+            }, $products);
+            self::set_products($new_campaign_id, $product_ids);
+        }
+
+        // Copy campaign meta
+        global $wpdb;
+        $meta_table = $wpdb->prefix . 'tapp_campaign_meta';
+        $metas = $wpdb->get_results($wpdb->prepare(
+            "SELECT meta_key, meta_value FROM {$meta_table} WHERE campaign_id = %d",
+            $campaign_id
+        ));
+
+        foreach ($metas as $meta) {
+            $wpdb->insert(
+                $meta_table,
+                [
+                    'campaign_id' => $new_campaign_id,
+                    'meta_key' => $meta->meta_key,
+                    'meta_value' => $meta->meta_value,
+                ]
+            );
+        }
+
+        do_action('tapp_campaigns_campaign_duplicated', $new_campaign_id, $campaign_id);
+
+        return $new_campaign_id;
     }
 }

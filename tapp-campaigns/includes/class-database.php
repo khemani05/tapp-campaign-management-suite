@@ -67,6 +67,16 @@ class TAPP_Campaigns_Database {
             $params[] = $search;
         }
 
+        if (isset($args['date_from']) && !empty($args['date_from'])) {
+            $where[] = 'start_date >= %s';
+            $params[] = $args['date_from'] . ' 00:00:00';
+        }
+
+        if (isset($args['date_to']) && !empty($args['date_to'])) {
+            $where[] = 'end_date <= %s';
+            $params[] = $args['date_to'] . ' 23:59:59';
+        }
+
         $where_clause = implode(' AND ', $where);
         $order_clause = sprintf('%s %s', $args['orderby'], $args['order']);
 

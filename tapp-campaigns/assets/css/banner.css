@@ -1,0 +1,381 @@
+/**
+ * TAPP Campaigns - Homepage Banner Styles
+ */
+
+/* Banner Container */
+.tapp-campaigns-banner-container {
+    position: relative;
+    z-index: 999;
+    margin-bottom: 20px;
+}
+
+/* Banner Base */
+.tapp-campaign-banner {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+    background: #fff;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    animation: slideDown 0.5s ease;
+}
+
+.tapp-campaign-banner:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Urgency States */
+.tapp-campaign-banner.tapp-urgency-urgent {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+}
+
+.tapp-campaign-banner.tapp-urgency-urgent .banner-icon {
+    color: #dc3545;
+}
+
+.tapp-campaign-banner.tapp-urgency-warning {
+    border-color: #ffc107;
+    background: linear-gradient(135deg, #fff 0%, #fffbf0 100%);
+}
+
+.tapp-campaign-banner.tapp-urgency-warning .banner-icon {
+    color: #ffc107;
+}
+
+.tapp-campaign-banner.tapp-urgency-normal {
+    border-color: #0073aa;
+}
+
+.tapp-campaign-banner.tapp-urgency-normal .banner-icon {
+    color: #0073aa;
+}
+
+/* Banner Icon */
+.banner-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: currentColor;
+    color: inherit;
+    border-radius: 50%;
+    opacity: 0.1;
+}
+
+.banner-icon svg {
+    position: relative;
+    z-index: 1;
+    opacity: 10;
+}
+
+/* Banner Content */
+.banner-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.banner-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.banner-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.4;
+}
+
+.banner-description {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.banner-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.campaign-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    background: #f0f0f1;
+    color: #1a1a1a;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.campaign-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+.campaign-countdown svg {
+    flex-shrink: 0;
+}
+
+.countdown-text {
+    white-space: nowrap;
+}
+
+/* Dismiss Button */
+.banner-dismiss {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.banner-dismiss:hover {
+    background: #f0f0f1;
+    color: #333;
+}
+
+.banner-dismiss:active {
+    transform: scale(0.95);
+}
+
+/* Banner Action */
+.banner-action {
+    flex-shrink: 0;
+}
+
+.banner-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #0073aa;
+    color: #fff !important;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none !important;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.banner-button:hover {
+    background: #005177;
+    transform: translateX(2px);
+}
+
+.banner-button svg {
+    flex-shrink: 0;
+    transition: transform 0.3s;
+}
+
+.banner-button:hover svg {
+    transform: translateX(3px);
+}
+
+.tapp-urgency-urgent .banner-button {
+    background: #dc3545;
+    animation: pulse 2s infinite;
+}
+
+.tapp-urgency-urgent .banner-button:hover {
+    background: #c82333;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
+    }
+}
+
+.tapp-urgency-warning .banner-button {
+    background: #ffc107;
+    color: #1a1a1a !important;
+}
+
+.tapp-urgency-warning .banner-button:hover {
+    background: #e0a800;
+}
+
+/* Dismissing Animation */
+.tapp-campaign-banner.dismissing {
+    animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        max-height: 0;
+        overflow: hidden;
+    }
+}
+
+/* Compact Banner Style */
+.tapp-banner-compact {
+    padding: 12px 15px;
+    gap: 10px;
+}
+
+.tapp-banner-compact .banner-icon {
+    width: 32px;
+    height: 32px;
+}
+
+.tapp-banner-compact .banner-title {
+    font-size: 14px;
+}
+
+.tapp-banner-compact .banner-description {
+    display: none;
+}
+
+.tapp-banner-compact .banner-button {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+/* Minimal Banner Style */
+.tapp-banner-minimal {
+    padding: 10px 15px;
+    gap: 10px;
+    border: 1px solid #e5e5e5;
+    box-shadow: none;
+}
+
+.tapp-banner-minimal .banner-icon {
+    display: none;
+}
+
+.tapp-banner-minimal .banner-description {
+    display: none;
+}
+
+.tapp-banner-minimal .banner-title {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tapp-campaign-banner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 15px;
+    }
+
+    .banner-icon {
+        display: none;
+    }
+
+    .banner-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .banner-dismiss {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .banner-action {
+        width: 100%;
+    }
+
+    .banner-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .banner-meta {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tapp-campaign-banner {
+        padding: 12px;
+    }
+
+    .banner-title {
+        font-size: 14px;
+    }
+
+    .banner-description {
+        font-size: 13px;
+    }
+
+    .campaign-countdown {
+        font-size: 12px;
+    }
+}
+
+/* Fixed Position Option (for themes that support it) */
+.tapp-banner-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    margin: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+}
+
+/* Print Styles */
+@media print {
+    .tapp-campaigns-banner-container {
+        display: none;
+    }
+}
